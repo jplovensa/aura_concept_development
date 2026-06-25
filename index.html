@@ -207,6 +207,28 @@
 
         #info-panel.visible { transform: translateX(0); }
 
+        /* Mobile Layout Optimisations */
+        @media (max-width: 768px) {
+            #info-panel {
+                top: auto;
+                left: 16px;
+                right: 16px;
+                bottom: 96px;
+                width: auto;
+                max-height: 60vh;
+                transform: translateY(120%);
+                border-radius: 1.5rem;
+            }
+            #info-panel.visible { transform: translateY(0); }
+            
+            .glass-nav {
+                width: calc(100% - 32px);
+                bottom: 16px;
+                padding: 12px 24px;
+                justify-content: space-between;
+            }
+        }
+
         .content-section {
             display: none;
             animation: fadeUp 0.8s cubic-bezier(0.16, 1, 0.3, 1) forwards;
@@ -271,12 +293,12 @@
     <main id="app" class="fixed inset-0 opacity-0 pointer-events-none transition-opacity duration-1000 overflow-hidden">
         
         <!-- HEADER -->
-        <header class="absolute top-0 left-0 w-full p-6 md:p-8 flex justify-between items-center z-50 pointer-events-none">
-            <div class="text-2xl font-light tracking-tight text-white flex items-center gap-3">
+        <header class="absolute top-0 left-0 w-full p-4 md:p-8 flex justify-between items-center z-50 pointer-events-none">
+            <div class="text-xl md:text-2xl font-light tracking-tight text-white flex items-center gap-2 md:gap-3">
                 <i data-lucide="diamond" class="w-5 h-5 text-emerald-500"></i>
                 <span class="tracking-widest">AURA</span>
             </div>
-            <div class="glass-panel px-5 py-2.5 rounded-full text-[10px] uppercase tracking-widest text-emerald-400 font-medium pointer-events-auto flex items-center gap-2">
+            <div class="glass-panel px-4 py-2 md:px-5 md:py-2.5 rounded-full text-[9px] md:text-[10px] uppercase tracking-widest text-emerald-400 font-medium pointer-events-auto flex items-center gap-2">
                 <div class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></div>
                 Live Parametric Masterplan
             </div>
@@ -288,17 +310,17 @@
 
         <!-- SIDE INFO PANEL -->
         <aside id="info-panel" class="glass-panel rounded-3xl flex flex-col overflow-hidden border border-white/10">
-            <div id="panel-content-container" class="flex-1 overflow-y-auto custom-scroll p-8 md:p-10">
+            <div id="panel-content-container" class="flex-1 overflow-y-auto custom-scroll p-6 md:p-10 pb-10">
                 <!-- Content Nodes -->
             </div>
         </aside>
 
         <!-- NAVIGATION DOCK -->
-        <div class="absolute bottom-8 left-1/2 -translate-x-1/2 z-50 glass-nav px-8 py-5 rounded-full flex items-center gap-8 shadow-2xl border border-white/10">
+        <div class="absolute bottom-4 md:bottom-8 left-1/2 -translate-x-1/2 z-50 glass-nav px-6 md:px-8 py-4 md:py-5 rounded-full flex items-center gap-4 md:gap-8 shadow-2xl border border-white/10 w-[calc(100%-2rem)] md:w-auto justify-between md:justify-center">
             <button id="nav-prev" class="text-zinc-400 hover:text-white transition-colors disabled:opacity-20 hover:scale-110 active:scale-95 transition-all">
                 <i data-lucide="chevron-left" class="w-5 h-5"></i>
             </button>
-            <div id="dock-indicators" class="flex gap-4">
+            <div id="dock-indicators" class="flex gap-2 md:gap-4 overflow-x-auto custom-scroll px-2">
                 <!-- Indicators -->
             </div>
             <button id="nav-next" class="text-zinc-400 hover:text-white transition-colors disabled:opacity-20 hover:scale-110 active:scale-95 transition-all">
@@ -317,7 +339,7 @@
         
         <!-- Countdown Wrapper -->
         <div id="countdown-wrapper" class="absolute inset-0 flex items-center justify-center z-20 pointer-events-none">
-            <div id="countdown-num" class="text-[12rem] md:text-[18rem] font-light text-white opacity-0 tracking-tighter mix-blend-overlay"></div>
+            <div id="countdown-num" class="text-[8rem] md:text-[18rem] font-light text-white opacity-0 tracking-tighter mix-blend-overlay"></div>
         </div>
         
         <div class="relative z-30 flex flex-col items-center max-w-3xl px-6 text-center">
@@ -334,10 +356,10 @@
             </h2>
             
             <div class="mt-10 opacity-0 scale-95 transition-all duration-1000" id="end-logos">
-                <div class="glass-panel px-10 py-5 rounded-full flex items-center gap-8 shadow-[0_0_30px_rgba(0,0,0,0.8)] h-16">
-                    <svg viewBox="0 0 200 60" class="h-8 w-auto" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M10 35 L45 10 L80 35 L55 35 L45 25 L35 35 Z" fill="#34d399"/><path d="M45 25 L65 45 L45 60 L25 45 Z" fill="#059669"/><text x="85" y="32" fill="#34d399" font-family="Inter, sans-serif" font-weight="800" font-size="28" letter-spacing="2">FJÄLL</text><text x="85" y="55" fill="#a1a1aa" font-family="Inter, sans-serif" font-weight="300" font-size="22" letter-spacing="3">GROUP</text></svg>
-                    <div class="w-px h-8 bg-white/10"></div>
-                    <svg viewBox="0 0 240 60" class="h-6 w-auto" fill="none" xmlns="http://www.w3.org/2000/svg"><rect x="10" y="15" width="30" height="30" stroke="#34d399" stroke-width="4" fill="none" /><rect x="20" y="25" width="10" height="10" fill="#34d399" /><text x="50" y="38" font-family="Inter, sans-serif" font-weight="600" font-size="24" letter-spacing="1"><tspan fill="#ffffff">GREEN</tspan><tspan fill="#34d399">SHIFT</tspan></text></svg>
+                <div class="glass-panel px-6 md:px-10 py-4 md:py-5 rounded-full flex items-center gap-4 md:gap-8 shadow-[0_0_30px_rgba(0,0,0,0.8)] h-14 md:h-16">
+                    <svg viewBox="0 0 200 60" class="h-6 md:h-8 w-auto" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M10 35 L45 10 L80 35 L55 35 L45 25 L35 35 Z" fill="#34d399"/><path d="M45 25 L65 45 L45 60 L25 45 Z" fill="#059669"/><text x="85" y="32" fill="#34d399" font-family="Inter, sans-serif" font-weight="800" font-size="28" letter-spacing="2">FJÄLL</text><text x="85" y="55" fill="#a1a1aa" font-family="Inter, sans-serif" font-weight="300" font-size="22" letter-spacing="3">GROUP</text></svg>
+                    <div class="w-px h-6 md:h-8 bg-white/10"></div>
+                    <svg viewBox="0 0 240 60" class="h-4 md:h-6 w-auto" fill="none" xmlns="http://www.w3.org/2000/svg"><rect x="10" y="15" width="30" height="30" stroke="#34d399" stroke-width="4" fill="none" /><rect x="20" y="25" width="10" height="10" fill="#34d399" /><text x="50" y="38" font-family="Inter, sans-serif" font-weight="600" font-size="24" letter-spacing="1"><tspan fill="#ffffff">GREEN</tspan><tspan fill="#34d399">SHIFT</tspan></text></svg>
                 </div>
             </div>
         </div>
@@ -899,6 +921,56 @@
         navNext.onclick = () => goToNode(currentNodeIndex + 1);
         navPrev.onclick = () => goToNode(currentNodeIndex - 1);
         
+        // --- MOBILE SCROLL & SWIPE LOGIC ---
+        let touchStartY = 0;
+        let touchStartX = 0;
+        let isScrollingPanel = false;
+        let scrollTimeout = null;
+
+        function lockScroll() {
+            scrollTimeout = setTimeout(() => { scrollTimeout = null; }, 1200);
+        }
+
+        window.addEventListener('wheel', (e) => {
+            if(document.getElementById('app').classList.contains('opacity-0') || isScrollingPanel || scrollTimeout) return;
+            
+            if(e.deltaY > 50) {
+                goToNode(currentNodeIndex + 1);
+                lockScroll();
+            } else if (e.deltaY < -50) {
+                goToNode(currentNodeIndex - 1);
+                lockScroll();
+            }
+        }, {passive: true});
+
+        window.addEventListener('touchstart', (e) => {
+            touchStartX = e.touches[0].clientX;
+            touchStartY = e.touches[0].clientY;
+            // Prevent slide change if the user is scrolling the text inside the info panel
+            isScrollingPanel = e.target.closest('#panel-content-container') !== null;
+        }, {passive: true});
+
+        window.addEventListener('touchend', (e) => {
+            if(document.getElementById('app').classList.contains('opacity-0') || isScrollingPanel) return;
+            
+            let touchEndX = e.changedTouches[0].clientX;
+            let touchEndY = e.changedTouches[0].clientY;
+            
+            let diffX = touchStartX - touchEndX;
+            let diffY = touchStartY - touchEndY;
+
+            // Trigger slide change only on deliberate swipe distance
+            if (Math.abs(diffX) > 40 || Math.abs(diffY) > 40) {
+                if (Math.abs(diffX) > Math.abs(diffY)) {
+                    if (diffX > 0) goToNode(currentNodeIndex + 1); // Swipe left
+                    else goToNode(currentNodeIndex - 1); // Swipe right
+                } else {
+                    if (diffY > 0) goToNode(currentNodeIndex + 1); // Swipe up
+                    else goToNode(currentNodeIndex - 1); // Swipe down
+                }
+            }
+        });
+
         window.addEventListener('keydown', (e) => {
             if(document.getElementById('app').classList.contains('opacity-0')) return;
             if (e.key === 'ArrowRight' || e.key === 'ArrowDown') goToNode(currentNodeIndex + 1);
