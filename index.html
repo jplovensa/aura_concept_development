@@ -1,0 +1,1014 @@
+<!DOCTYPE html>
+<html lang="en" class="antialiased text-zinc-100 bg-black">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>AURA | The Bornean Canopy - Reality Walkthrough</title>
+    
+    <!-- Inter Font -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@200;300;400;500;600;700&display=swap" rel="stylesheet">
+    
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['Inter', 'sans-serif'],
+                    },
+                    colors: {
+                        emerald: {
+                            400: '#34d399',
+                            500: '#10b981',
+                            600: '#059669',
+                            900: '#064e3b',
+                        }
+                    },
+                    transitionTimingFunction: {
+                        'apple': 'cubic-bezier(0.16, 1, 0.3, 1)',
+                    }
+                }
+            }
+        }
+    </script>
+
+    <!-- Lucide Icons -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+
+    <!-- Three.js -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+
+    <style>
+        body {
+            margin: 0;
+            overflow: hidden;
+            background-color: #030303;
+        }
+
+        /* Glassmorphism Utilities */
+        .glass-panel {
+            background: rgba(15, 15, 17, 0.5);
+            backdrop-filter: blur(32px);
+            -webkit-backdrop-filter: blur(32px);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            box-shadow: 0 30px 60px rgba(0,0,0,0.5);
+        }
+
+        .glass-nav {
+            background: rgba(5, 5, 5, 0.6);
+            backdrop-filter: blur(24px);
+            -webkit-backdrop-filter: blur(24px);
+            border-top: 1px solid rgba(255, 255, 255, 0.05);
+        }
+
+        /* Ambient Video Background */
+        .ambient-video {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            min-width: 100vw;
+            min-height: 100vh;
+            width: auto;
+            height: auto;
+            transform: translate(-50%, -50%);
+            z-index: -2;
+            opacity: 0.12;
+            filter: blur(40px) saturate(1.5);
+        }
+
+        /* Cinematic Preloader */
+        #preloader {
+            position: fixed;
+            inset: 0;
+            z-index: 9999;
+            background: #000;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            transition: opacity 1.5s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+
+        .preloader-video {
+            position: absolute;
+            inset: 0;
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            opacity: 0.5;
+            z-index: -1;
+            animation: cinematicZoom 6s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+        }
+
+        @keyframes cinematicZoom {
+            from { transform: scale(1); filter: brightness(0.5); }
+            to { transform: scale(1.1); filter: brightness(1); }
+        }
+
+        .progress-bar {
+            width: 0%;
+            height: 2px;
+            background: linear-gradient(90deg, #059669, #34d399);
+            transition: width 0.4s ease;
+            box-shadow: 0 0 10px rgba(52, 211, 153, 0.5);
+        }
+
+        /* --- 3D WEBGL ENGINE --- */
+        #webgl-container {
+            position: fixed;
+            inset: 0;
+            z-index: 1;
+            pointer-events: none;
+        }
+
+        #webgl-canvas {
+            width: 100%;
+            height: 100%;
+            display: block;
+        }
+
+        /* Hotspot Pins (2D Overlay) */
+        #hotspots-container {
+            position: fixed;
+            inset: 0;
+            z-index: 50;
+            pointer-events: none;
+        }
+
+        .hotspot {
+            position: absolute;
+            transform: translate(-50%, -100%);
+            cursor: pointer;
+            pointer-events: auto;
+        }
+
+        .hotspot-content {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            transition: transform 0.4s cubic-bezier(0.16, 1, 0.3, 1), filter 0.3s ease;
+        }
+
+        .hotspot:hover .hotspot-content {
+            transform: scale(1.15) translateY(-10px);
+            filter: drop-shadow(0 0 15px rgba(16, 185, 129, 0.8));
+        }
+
+        .hotspot-line {
+            width: 2px;
+            height: 60px;
+            background: linear-gradient(to top, rgba(16, 185, 129, 0), rgba(16, 185, 129, 1));
+            margin-bottom: -4px;
+        }
+
+        .hotspot-dot {
+            width: 12px;
+            height: 12px;
+            background: #10b981;
+            border-radius: 50%;
+            border: 2px solid #000;
+            box-shadow: 0 0 20px #10b981;
+        }
+
+        .hotspot-label {
+            margin-bottom: 8px;
+            background: rgba(0,0,0,0.85);
+            border: 1px solid rgba(16, 185, 129, 0.4);
+            padding: 6px 14px;
+            border-radius: 30px;
+            font-size: 10px;
+            text-transform: uppercase;
+            letter-spacing: 0.15em;
+            color: #fff;
+            white-space: nowrap;
+            backdrop-filter: blur(8px);
+        }
+
+        .hotspot.active .hotspot-dot { background: #fff; box-shadow: 0 0 30px #fff; border-color: #10b981; }
+        .hotspot.active .hotspot-line { background: linear-gradient(to top, rgba(255,255,255,0), rgba(255,255,255,1)); }
+        .hotspot.active .hotspot-label { border-color: #fff; background: #fff; color: #000; font-weight: 700; }
+
+        /* --- UI OVERLAYS --- */
+        #info-panel {
+            position: absolute;
+            top: 24px;
+            right: 24px;
+            bottom: 100px;
+            width: 440px;
+            transform: translateX(120%);
+            transition: transform 1s cubic-bezier(0.16, 1, 0.3, 1);
+            z-index: 1000;
+            display: flex;
+            flex-direction: column;
+        }
+
+        #info-panel.visible { transform: translateX(0); }
+
+        .content-section {
+            display: none;
+            animation: fadeUp 0.8s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+        }
+        .content-section.active { display: block; }
+
+        @keyframes fadeUp {
+            from { opacity: 0; transform: translateY(30px) scale(0.98); }
+            to { opacity: 1; transform: translateY(0) scale(1); }
+        }
+
+        .custom-scroll::-webkit-scrollbar { width: 4px; }
+        .custom-scroll::-webkit-scrollbar-track { background: transparent; }
+        .custom-scroll::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.15); border-radius: 10px; }
+    </style>
+</head>
+<body class="text-zinc-100 font-sans selection:bg-emerald-500/30">
+
+    <!-- CINEMATIC PRELOADER -->
+    <div id="preloader">
+        <video class="preloader-video" autoplay loop muted playsinline>
+            <source src="https://assets.mixkit.co/videos/preview/mixkit-aerial-view-of-a-misty-mountain-forest-2269-large.mp4" type="video/mp4">
+        </video>
+        <div class="absolute inset-0 bg-gradient-to-t from-black via-black/70 to-black/90 z-0"></div>
+        
+        <div class="relative z-10 flex flex-col items-center w-full max-w-md px-8">
+            <h1 class="text-5xl md:text-7xl font-light tracking-tighter text-white mb-2 opacity-0 translate-y-6 transition-all duration-1000" id="pre-title">
+                AURA
+            </h1>
+            <h2 class="text-sm uppercase tracking-[0.3em] text-emerald-500 font-medium mb-10 opacity-0 translate-y-4 transition-all duration-1000 delay-300" id="pre-subtitle">
+                The Bornean Canopy
+            </h2>
+            
+            <div class="w-full h-[1px] bg-white/10 rounded-full overflow-hidden opacity-0" id="pre-bar-container">
+                <div class="progress-bar" id="pre-bar"></div>
+            </div>
+            
+            <div class="mt-6 h-6 flex items-center justify-center">
+                <p class="text-[10px] tracking-[0.2em] uppercase text-zinc-400 font-medium opacity-0 absolute transition-opacity duration-300" id="pre-text-1">Initiating Fjäll MMC Systems...</p>
+                <p class="text-[10px] tracking-[0.2em] uppercase text-zinc-400 font-medium opacity-0 absolute transition-opacity duration-300" id="pre-text-2">Calibrating BEMMELS Structural Grid...</p>
+                <p class="text-[10px] tracking-[0.2em] uppercase text-zinc-400 font-medium opacity-0 absolute transition-opacity duration-300" id="pre-text-3">Synthesising Parametric 3D Geometry...</p>
+                <p class="text-[10px] tracking-[0.2em] uppercase text-emerald-400 font-medium opacity-0 absolute transition-opacity duration-300" id="pre-text-4">Parametric Environment Ready.</p>
+            </div>
+        </div>
+
+        <div class="absolute bottom-12 left-0 w-full flex justify-center opacity-0 transition-opacity duration-1000 delay-500" id="pre-logos">
+            <div class="glass-panel px-8 py-3 rounded-full flex items-center gap-6 shadow-[0_0_20px_rgba(0,0,0,0.5)] h-14">
+                <svg viewBox="0 0 200 60" class="h-6 w-auto" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M10 35 L45 10 L80 35 L55 35 L45 25 L35 35 Z" fill="#34d399"/><path d="M45 25 L65 45 L45 60 L25 45 Z" fill="#059669"/><text x="85" y="32" fill="#34d399" font-family="Inter, sans-serif" font-weight="800" font-size="28" letter-spacing="2">FJÄLL</text><text x="85" y="55" fill="#a1a1aa" font-family="Inter, sans-serif" font-weight="300" font-size="22" letter-spacing="3">GROUP</text></svg>
+                <div class="w-px h-6 bg-white/10"></div>
+                <svg viewBox="0 0 240 60" class="h-5 w-auto" fill="none" xmlns="http://www.w3.org/2000/svg"><rect x="10" y="15" width="30" height="30" stroke="#34d399" stroke-width="4" fill="none" /><rect x="20" y="25" width="10" height="10" fill="#34d399" /><text x="50" y="38" font-family="Inter, sans-serif" font-weight="600" font-size="24" letter-spacing="1"><tspan fill="#ffffff">GREEN</tspan><tspan fill="#34d399">SHIFT</tspan></text></svg>
+            </div>
+        </div>
+    </div>
+
+    <!-- AMBIENT BACKGROUND -->
+    <video class="ambient-video" autoplay loop muted playsinline>
+        <source src="https://assets.mixkit.co/videos/preview/mixkit-aerial-view-of-a-misty-mountain-forest-2269-large.mp4" type="video/mp4">
+    </video>
+    <div class="fixed inset-0 bg-black/85 z-[-1]"></div>
+
+    <!-- MAIN APP -->
+    <main id="app" class="fixed inset-0 opacity-0 pointer-events-none transition-opacity duration-1000 overflow-hidden">
+        
+        <!-- HEADER -->
+        <header class="absolute top-0 left-0 w-full p-6 md:p-8 flex justify-between items-center z-50 pointer-events-none">
+            <div class="text-2xl font-light tracking-tight text-white flex items-center gap-3">
+                <i data-lucide="diamond" class="w-5 h-5 text-emerald-500"></i>
+                <span class="tracking-widest">AURA</span>
+            </div>
+            <div class="glass-panel px-5 py-2.5 rounded-full text-[10px] uppercase tracking-widest text-emerald-400 font-medium pointer-events-auto flex items-center gap-2">
+                <div class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></div>
+                Live Parametric Masterplan
+            </div>
+        </header>
+
+        <!-- 3D WEBGL WORLD -->
+        <div id="webgl-container"></div>
+        <div id="hotspots-container"></div>
+
+        <!-- SIDE INFO PANEL -->
+        <aside id="info-panel" class="glass-panel rounded-3xl flex flex-col overflow-hidden border border-white/10">
+            <div id="panel-content-container" class="flex-1 overflow-y-auto custom-scroll p-8 md:p-10">
+                <!-- Content Nodes -->
+            </div>
+        </aside>
+
+        <!-- NAVIGATION DOCK -->
+        <div class="absolute bottom-8 left-1/2 -translate-x-1/2 z-50 glass-nav px-8 py-5 rounded-full flex items-center gap-8 shadow-2xl border border-white/10">
+            <button id="nav-prev" class="text-zinc-400 hover:text-white transition-colors disabled:opacity-20 hover:scale-110 active:scale-95 transition-all">
+                <i data-lucide="chevron-left" class="w-5 h-5"></i>
+            </button>
+            <div id="dock-indicators" class="flex gap-4">
+                <!-- Indicators -->
+            </div>
+            <button id="nav-next" class="text-zinc-400 hover:text-white transition-colors disabled:opacity-20 hover:scale-110 active:scale-95 transition-all">
+                <i data-lucide="chevron-right" class="w-5 h-5"></i>
+            </button>
+        </div>
+
+    </main>
+
+    <!-- END LOADER SEQUENCE -->
+    <div id="end-loader" class="fixed inset-0 z-[10000] bg-black flex flex-col items-center justify-center opacity-0 pointer-events-none transition-opacity duration-1000" style="display: none;">
+        <video class="absolute inset-0 w-full h-full object-cover opacity-30" autoplay loop muted playsinline>
+            <source src="https://assets.mixkit.co/videos/preview/mixkit-aerial-view-of-a-misty-mountain-forest-2269-large.mp4" type="video/mp4">
+        </video>
+        <div class="absolute inset-0 bg-gradient-to-t from-black via-black/80 to-black/40 z-0"></div>
+        
+        <!-- Countdown Wrapper -->
+        <div id="countdown-wrapper" class="absolute inset-0 flex items-center justify-center z-20 pointer-events-none">
+            <div id="countdown-num" class="text-[12rem] md:text-[18rem] font-light text-white opacity-0 tracking-tighter mix-blend-overlay"></div>
+        </div>
+        
+        <div class="relative z-30 flex flex-col items-center max-w-3xl px-6 text-center">
+            <div class="flex flex-col md:flex-row items-center gap-2 md:gap-4 text-xl md:text-2xl font-light tracking-wide text-zinc-400 leading-relaxed opacity-0 translate-y-4 transition-all duration-1000" id="end-q1">
+                <span>The arbitrage is clear.</span>
+                <span class="hidden md:inline text-zinc-600">•</span>
+                <span>The demand is waiting.</span>
+            </div>
+            
+            <div class="w-12 h-[1px] bg-emerald-500/50 my-6 opacity-0" id="end-line"></div>
+            
+            <h2 class="text-3xl md:text-5xl font-light text-white tracking-tight leading-tight opacity-0 translate-y-4 transition-all duration-1000" id="end-q3">
+                Will you merely build, or will you <br/><span class="text-emerald-400">breathe life back into the legacy of Kuching?</span>
+            </h2>
+            
+            <div class="mt-10 opacity-0 scale-95 transition-all duration-1000" id="end-logos">
+                <div class="glass-panel px-10 py-5 rounded-full flex items-center gap-8 shadow-[0_0_30px_rgba(0,0,0,0.8)] h-16">
+                    <svg viewBox="0 0 200 60" class="h-8 w-auto" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M10 35 L45 10 L80 35 L55 35 L45 25 L35 35 Z" fill="#34d399"/><path d="M45 25 L65 45 L45 60 L25 45 Z" fill="#059669"/><text x="85" y="32" fill="#34d399" font-family="Inter, sans-serif" font-weight="800" font-size="28" letter-spacing="2">FJÄLL</text><text x="85" y="55" fill="#a1a1aa" font-family="Inter, sans-serif" font-weight="300" font-size="22" letter-spacing="3">GROUP</text></svg>
+                    <div class="w-px h-8 bg-white/10"></div>
+                    <svg viewBox="0 0 240 60" class="h-6 w-auto" fill="none" xmlns="http://www.w3.org/2000/svg"><rect x="10" y="15" width="30" height="30" stroke="#34d399" stroke-width="4" fill="none" /><rect x="20" y="25" width="10" height="10" fill="#34d399" /><text x="50" y="38" font-family="Inter, sans-serif" font-weight="600" font-size="24" letter-spacing="1"><tspan fill="#ffffff">GREEN</tspan><tspan fill="#34d399">SHIFT</tspan></text></svg>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- LOGIC & DATA -->
+    <script>
+        lucide.createIcons();
+
+        // --- 1. PROSPECTUS DATA & CAMERA TARGETS ---
+        const mapNodes = [
+            {
+                id: 'overview', title: 'Project Overview',
+                targetX: 0, targetZ: 0, camDist: 1800,
+                content: `
+                    <div class="space-y-6">
+                        <div class="inline-block px-3 py-1 rounded-full bg-emerald-500/20 border border-emerald-500/30 text-emerald-400 text-[10px] uppercase tracking-widest">Executive Summary</div>
+                        <h2 class="text-4xl font-light text-white leading-tight tracking-tight">The Bornean <br/><span class="text-emerald-400">Canopy</span></h2>
+                        <p class="text-sm text-zinc-400 leading-relaxed font-light">A 1.7-hectare boutique luxury residential development engineered to capture the most lucrative segment of the Kuching property market.</p>
+                        
+                        <div class="grid grid-cols-2 gap-6 pt-6 border-t border-white/10">
+                            <div>
+                                <div class="text-[10px] text-zinc-500 uppercase tracking-widest mb-2">Land Area</div>
+                                <div class="text-2xl font-light text-white">1.7<span class="text-sm text-zinc-500 ml-1">Ha</span></div>
+                            </div>
+                            <div>
+                                <div class="text-[10px] text-zinc-500 uppercase tracking-widest mb-2">Total Units</div>
+                                <div class="text-2xl font-light text-white">50</div>
+                            </div>
+                            <div>
+                                <div class="text-[10px] text-zinc-500 uppercase tracking-widest mb-2">Target Launch</div>
+                                <div class="text-xl font-light text-emerald-400">Q4 2026</div>
+                            </div>
+                            <div>
+                                <div class="text-[10px] text-emerald-600 uppercase tracking-widest mb-2">Profit on Cost</div>
+                                <div class="text-xl font-medium text-white">~104%</div>
+                            </div>
+                        </div>
+                    </div>
+                `
+            },
+            {
+                id: 'arbitrage', title: 'Market Arbitrage',
+                targetX: -500, targetZ: -500, camDist: 1100,
+                content: `
+                    <div class="space-y-6">
+                        <div class="w-12 h-12 rounded-full bg-white/5 border border-white/10 flex items-center justify-center mb-6">
+                            <i data-lucide="target" class="w-5 h-5 text-emerald-400"></i>
+                        </div>
+                        <h2 class="text-3xl font-light text-white leading-tight tracking-tight">Exploiting the <br/>Structural Gap</h2>
+                        <p class="text-sm text-zinc-400 leading-relaxed font-light">The premium market is anchored by SÓL Estate (RM 502–627 psf). Mid-market projects are stagnant, trapped by strata-title resistance and shared parking friction.</p>
+                        
+                        <div class="space-y-4 pt-4">
+                            <div class="bg-black/40 p-4 rounded-xl border border-white/5">
+                                <div class="flex justify-between text-[10px] uppercase tracking-widest text-zinc-500 mb-2">
+                                    <span>SÓL Estate (Ceiling)</span>
+                                    <span>RM 627 psf</span>
+                                </div>
+                                <div class="w-full bg-white/5 h-1.5 rounded-full overflow-hidden"><div class="bg-zinc-600 w-[90%] h-full"></div></div>
+                            </div>
+                            <div class="bg-emerald-900/20 p-4 rounded-xl border border-emerald-500/30">
+                                <div class="flex justify-between text-[10px] uppercase tracking-widest text-emerald-400 font-semibold mb-2">
+                                    <span>AURA (The Sweet Spot)</span>
+                                    <span>RM 500-580 psf</span>
+                                </div>
+                                <div class="w-full bg-white/5 h-1.5 rounded-full overflow-hidden"><div class="bg-emerald-500 w-[75%] h-full"></div></div>
+                            </div>
+                        </div>
+                        <div class="p-4 bg-white/5 rounded-xl border border-white/10 mt-4">
+                            <p class="text-xs text-zinc-300 font-light leading-relaxed">Strategy: Deliver massive 3-storey built-up areas and 4-car garages on an efficient terrace footprint, ensuring private titles.</p>
+                        </div>
+                    </div>
+                `
+            },
+            {
+                id: 'philosophy', title: 'The Philosophy',
+                targetX: 400, targetZ: -300, camDist: 1300,
+                content: `
+                    <div class="space-y-6">
+                        <div class="w-12 h-12 rounded-full bg-white/5 border border-white/10 flex items-center justify-center mb-6">
+                            <i data-lucide="wind" class="w-5 h-5 text-emerald-400"></i>
+                        </div>
+                        <h2 class="text-3xl font-light text-white leading-tight tracking-tight">"The Home That <br/>Breathes Life Back"</h2>
+                        <p class="text-sm text-zinc-400 leading-relaxed font-light">True luxury is not merely space; it is silence, perfect climate, and absolute privacy. AURA actively restores the resident, acting as an antidote to urban fatigue.</p>
+                        
+                        <div class="pt-4 border-t border-white/10 space-y-5">
+                            <div class="flex items-start gap-4 p-3 hover:bg-white/5 rounded-xl transition-colors">
+                                <div class="bg-emerald-500/20 p-2 rounded-lg shrink-0 border border-emerald-500/30"><i data-lucide="thermometer" class="w-4 h-4 text-emerald-400"></i></div>
+                                <div>
+                                    <h4 class="text-white text-sm font-medium">Thermal Inertia</h4>
+                                    <p class="text-xs text-zinc-400 mt-1 leading-relaxed">Passively regulates temperature via MMC panels, drastically reducing reliance on artificial cooling.</p>
+                                </div>
+                            </div>
+                            <div class="flex items-start gap-4 p-3 hover:bg-white/5 rounded-xl transition-colors">
+                                <div class="bg-emerald-500/20 p-2 rounded-lg shrink-0 border border-emerald-500/30"><i data-lucide="volume-x" class="w-4 h-4 text-emerald-400"></i></div>
+                                <div>
+                                    <h4 class="text-white text-sm font-medium">Acoustic Isolation</h4>
+                                    <p class="text-xs text-zinc-400 mt-1 leading-relaxed">A fortress of quiet, stripping away neighbourhood noise to secure multi-generational peace.</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                `
+            },
+            {
+                id: 'architecture', title: 'Fjäll Technology',
+                targetX: -300, targetZ: 300, camDist: 1200,
+                content: `
+                    <div class="space-y-6">
+                        <div class="flex items-center justify-between mb-6">
+                            <div class="w-12 h-12 rounded-full bg-white/5 border border-white/10 flex items-center justify-center">
+                                <i data-lucide="layers" class="w-5 h-5 text-emerald-400"></i>
+                            </div>
+                            <div class="h-6">
+                                <svg viewBox="0 0 200 60" class="h-full w-auto" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M10 35 L45 10 L80 35 L55 35 L45 25 L35 35 Z" fill="#34d399"/><path d="M45 25 L65 45 L45 60 L25 45 Z" fill="#059669"/><text x="85" y="32" fill="#34d399" font-family="Inter, sans-serif" font-weight="800" font-size="28" letter-spacing="2">FJÄLL</text><text x="85" y="55" fill="#a1a1aa" font-family="Inter, sans-serif" font-weight="300" font-size="22" letter-spacing="3">GROUP</text></svg>
+                            </div>
+                        </div>
+                        <h2 class="text-3xl font-light text-white leading-tight tracking-tight">The Technological <br/>Moat</h2>
+                        <p class="text-sm text-zinc-400 leading-relaxed font-light">Uncompromising Swedish material science and Japanese manufacturing precision engineered into a 3-storey parametric masterpiece.</p>
+                        
+                        <div class="space-y-3 pt-2">
+                            <div class="p-4 bg-white/5 rounded-xl border border-white/10 hover:border-emerald-500/40 transition-all duration-300 group">
+                                <h4 class="text-emerald-400 text-[10px] uppercase tracking-widest font-semibold mb-2 flex items-center gap-2"><div class="w-1.5 h-1.5 bg-emerald-500 rounded-full"></div> Level 1: The Roots</h4>
+                                <p class="text-xs text-zinc-300 leading-relaxed">Anchored by <strong class="text-white">BEMMELS</strong> basalt volcanic rock fibre. 1:20 weight-to-strength ratio against steel. Non-corrosive footprint.</p>
+                            </div>
+                            <div class="p-4 bg-white/5 rounded-xl border border-white/10 hover:border-emerald-500/40 transition-all duration-300 group">
+                                <h4 class="text-emerald-400 text-[10px] uppercase tracking-widest font-semibold mb-2 flex items-center gap-2"><div class="w-1.5 h-1.5 bg-emerald-500 rounded-full"></div> Level 2: The Trunk</h4>
+                                <p class="text-xs text-zinc-300 leading-relaxed">Encased in precision CNC-milled <strong class="text-white">GX 100 EPS panels</strong>. Elite thermal mass for the private en-suite quarters.</p>
+                            </div>
+                            <div class="p-4 bg-white/5 rounded-xl border border-white/10 hover:border-emerald-500/40 transition-all duration-300 group">
+                                <h4 class="text-amber-400 text-[10px] uppercase tracking-widest font-semibold mb-2 flex items-center gap-2"><div class="w-1.5 h-1.5 bg-amber-500 rounded-full"></div> Level 3: The Canopy</h4>
+                                <p class="text-xs text-zinc-300 leading-relaxed">Shielded by the <strong class="text-white">Monolithic Veil</strong> exterior finish, obscuring rapid-build joints for a flawless bespoke façade.</p>
+                            </div>
+                        </div>
+                    </div>
+                `
+            },
+            {
+                id: 'masterplan', title: 'Engineered Scarcity',
+                targetX: 0, targetZ: 0, camDist: 1600,
+                content: `
+                    <div class="space-y-6">
+                        <div class="w-12 h-12 rounded-full bg-white/5 border border-white/10 flex items-center justify-center mb-6">
+                            <i data-lucide="building-2" class="w-5 h-5 text-emerald-400"></i>
+                        </div>
+                        <h2 class="text-3xl font-light text-white leading-tight tracking-tight">The Masterplan</h2>
+                        <p class="text-sm text-zinc-400 leading-relaxed font-light">Restricted to a limited release of 50 units. This "engineered scarcity" triggers immediate market absorption.</p>
+                        
+                        <div class="space-y-3 pt-4">
+                            <div class="flex items-center justify-between p-5 bg-white/5 rounded-2xl border-l-2 border-l-emerald-400 hover:bg-white/10 transition-colors">
+                                <div>
+                                    <h4 class="text-white text-sm font-medium">Single Home</h4>
+                                    <p class="text-[10px] text-zinc-400 mt-1 uppercase tracking-widest">Premium Terrace</p>
+                                </div>
+                                <div class="text-right">
+                                    <div class="text-2xl text-white font-light">25<span class="text-[10px] text-zinc-500 ml-1 uppercase tracking-widest">Units</span></div>
+                                    <div class="text-[10px] text-emerald-400 uppercase tracking-widest font-medium mt-1">3,200 sqft</div>
+                                </div>
+                            </div>
+                            <div class="flex items-center justify-between p-5 bg-white/5 rounded-2xl border-l-2 border-l-emerald-600 hover:bg-white/10 transition-colors">
+                                <div>
+                                    <h4 class="text-white text-sm font-medium">Big Home</h4>
+                                    <p class="text-[10px] text-zinc-400 mt-1 uppercase tracking-widest">Semi-D Proxy</p>
+                                </div>
+                                <div class="text-right">
+                                    <div class="text-2xl text-white font-light">15<span class="text-[10px] text-zinc-500 ml-1 uppercase tracking-widest">Units</span></div>
+                                    <div class="text-[10px] text-emerald-400 uppercase tracking-widest font-medium mt-1">3,300 sqft</div>
+                                </div>
+                            </div>
+                            <div class="flex items-center justify-between p-5 bg-white/5 rounded-2xl border-l-2 border-l-amber-500 hover:bg-white/10 transition-colors">
+                                <div>
+                                    <h4 class="text-white text-sm font-medium">Signature Villa</h4>
+                                    <p class="text-[10px] text-zinc-400 mt-1 uppercase tracking-widest">Bespoke Flagship</p>
+                                </div>
+                                <div class="text-right">
+                                    <div class="text-2xl text-white font-light">10<span class="text-[10px] text-zinc-500 ml-1 uppercase tracking-widest">Units</span></div>
+                                    <div class="text-[10px] text-amber-400 uppercase tracking-widest font-medium mt-1">4,000 sqft</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                `
+            },
+            {
+                id: 'financials', title: 'Financial Yield',
+                targetX: 100, targetZ: 100, camDist: 1500,
+                content: `
+                    <div class="space-y-6">
+                        <div class="w-12 h-12 rounded-full bg-white/5 border border-white/10 flex items-center justify-center mb-6">
+                            <i data-lucide="pie-chart" class="w-5 h-5 text-emerald-400"></i>
+                        </div>
+                        <h2 class="text-3xl font-light text-white leading-tight tracking-tight">Developer Yield</h2>
+                        <p class="text-sm text-zinc-400 leading-relaxed font-light">Applying highly efficient IDR-based MMC structural costs (RM 140 psf) whilst pricing at the Kuching luxury ceiling.</p>
+                        
+                        <div class="grid grid-cols-1 gap-4 pt-4">
+                            <div class="bg-black/40 p-5 rounded-2xl border border-white/5 flex justify-between items-center group hover:border-emerald-500/30 transition-colors">
+                                <div>
+                                    <div class="text-[10px] uppercase tracking-widest text-zinc-500 mb-1 group-hover:text-emerald-400 transition-colors">Total GDC</div>
+                                    <div class="text-[10px] text-zinc-400">Land, Build & Soft Costs</div>
+                                </div>
+                                <div class="text-2xl font-light text-white">RM 43.5M</div>
+                            </div>
+                            
+                            <div class="bg-black/40 p-5 rounded-2xl border border-white/5 flex justify-between items-center group hover:border-emerald-500/30 transition-colors">
+                                <div>
+                                    <div class="text-[10px] uppercase tracking-widest text-emerald-500 mb-1">Total GDV</div>
+                                    <div class="text-[10px] text-zinc-400">169,500 sqft Total Sellable</div>
+                                </div>
+                                <div class="text-2xl font-light text-emerald-400">RM 88.9M</div>
+                            </div>
+
+                            <div class="bg-emerald-900/20 p-6 rounded-2xl border border-emerald-500/40 mt-4 relative overflow-hidden">
+                                <div class="absolute right-[-20px] bottom-[-20px] opacity-10">
+                                    <i data-lucide="trending-up" class="w-32 h-32 text-emerald-400"></i>
+                                </div>
+                                <div class="text-[10px] uppercase tracking-widest text-emerald-400 font-semibold mb-2 relative z-10">Profit on Cost (PoC)</div>
+                                <div class="text-6xl font-light text-white relative z-10 tracking-tighter">104%</div>
+                                <div class="text-xs text-emerald-300 mt-2 tracking-wide relative z-10 font-medium">RM 45.39M Gross Profit</div>
+                            </div>
+                        </div>
+                    </div>
+                `
+            },
+            {
+                id: 'deployment', title: 'Risk Mitigation',
+                targetX: 0, targetZ: 0, camDist: 1800,
+                content: `
+                    <div class="space-y-6">
+                        <div class="w-12 h-12 rounded-full bg-emerald-500/20 border border-emerald-500/30 flex items-center justify-center mb-6">
+                            <i data-lucide="shield-check" class="w-5 h-5 text-emerald-400"></i>
+                        </div>
+                        <h2 class="text-3xl font-light text-white leading-tight tracking-tight">Execution Strategy</h2>
+                        <p class="text-sm text-zinc-400 leading-relaxed font-light">Explicitly engineered to protect the funder's capital whilst guaranteeing rapid market absorption.</p>
+                        
+                        <div class="space-y-4 pt-4">
+                            <div class="flex gap-5 bg-white/5 p-4 rounded-2xl border border-white/5 hover:border-emerald-500/30 transition-colors">
+                                <div class="text-emerald-500 font-light text-2xl">01</div>
+                                <div>
+                                    <h4 class="text-white text-sm font-medium">Eliminate Market Friction</h4>
+                                    <p class="text-xs text-zinc-400 mt-1 leading-relaxed">Individual land titles instantly captures buyers fatigued by strata-projects.</p>
+                                </div>
+                            </div>
+                            <div class="flex gap-5 bg-white/5 p-4 rounded-2xl border border-white/5 hover:border-emerald-500/30 transition-colors">
+                                <div class="text-emerald-500 font-light text-2xl">02</div>
+                                <div>
+                                    <h4 class="text-white text-sm font-medium">40% Timeline Compression</h4>
+                                    <p class="text-xs text-zinc-400 mt-1 leading-relaxed">Off-site fabrication accelerates masonry timelines, recycling capital rapidly.</p>
+                                </div>
+                            </div>
+                            <div class="flex gap-5 bg-white/5 p-4 rounded-2xl border border-white/5 hover:border-emerald-500/30 transition-colors">
+                                <div class="text-emerald-500 font-light text-2xl">03</div>
+                                <div class="w-full">
+                                    <div class="flex items-center justify-between w-full mb-1">
+                                        <h4 class="text-white text-sm font-medium">Turnkey Execution</h4>
+                                        <div class="h-3 opacity-80">
+                                            <svg viewBox="0 0 240 60" class="h-full w-auto" fill="none" xmlns="http://www.w3.org/2000/svg"><rect x="10" y="15" width="30" height="30" stroke="#34d399" stroke-width="4" fill="none" /><rect x="20" y="25" width="10" height="10" fill="#34d399" /><text x="50" y="38" font-family="Inter, sans-serif" font-weight="600" font-size="24" letter-spacing="1"><tspan fill="#ffffff">GREEN</tspan><tspan fill="#34d399">SHIFT</tspan></text></svg>
+                                        </div>
+                                    </div>
+                                    <p class="text-xs text-zinc-400 leading-relaxed">Capital deployment aligned flawlessly with material delivery. Zero financial lag.</p>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <button id="commence-btn" class="w-full mt-6 bg-white text-black hover:bg-emerald-500 hover:text-white py-4 rounded-full uppercase tracking-[0.15em] text-[10px] font-bold transition-all shadow-[0_0_20px_rgba(255,255,255,0.2)]">
+                            Commence Phase 1 Integration
+                        </button>
+                    </div>
+                `
+            }
+        ];
+
+        // --- 2. THREE.JS 3D ENGINE ---
+        let scene, camera, renderer;
+        let currentTarget = new THREE.Vector3(0, 0, 0);
+        let currentCamPos = new THREE.Vector3(1000, 1000, 1000);
+        
+        let targetLookAt = new THREE.Vector3(0, 0, 0);
+        let targetCamPos = new THREE.Vector3(1200, 1200, 1200);
+
+        const hotspotsContainer = document.getElementById('hotspots-container');
+        const hotspotElements = []; 
+
+        function initThree() {
+            const container = document.getElementById('webgl-container');
+            
+            scene = new THREE.Scene();
+            
+            // Perspective camera with narrow FOV for a cinematic isometric feel
+            camera = new THREE.PerspectiveCamera(25, window.innerWidth / window.innerHeight, 1, 15000);
+            camera.position.copy(currentCamPos);
+            camera.lookAt(currentTarget);
+
+            renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+            renderer.setSize(window.innerWidth, window.innerHeight);
+            renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+            container.appendChild(renderer.domElement);
+
+            // Lighting
+            const ambientLight = new THREE.AmbientLight(0xffffff, 0.6);
+            scene.add(ambientLight);
+
+            const dirLight = new THREE.DirectionalLight(0xffffff, 1.2);
+            dirLight.position.set(1000, 2000, 1000);
+            scene.add(dirLight);
+
+            const emeraldLight = new THREE.DirectionalLight(0x10b981, 1.5);
+            emeraldLight.position.set(-1000, 1000, -1000);
+            scene.add(emeraldLight);
+
+            // Grid / Terrain Base
+            const gridHelper = new THREE.GridHelper(6000, 120, 0x10b981, 0x10b981);
+            gridHelper.material.opacity = 0.15;
+            gridHelper.material.transparent = true;
+            scene.add(gridHelper);
+
+            generateCity3D();
+            generateHotspots();
+
+            window.addEventListener('resize', onWindowResize);
+            animate();
+        }
+
+        function createBuildingMesh(w, h, d, yPos, type) {
+            const geometry = new THREE.BoxGeometry(w, h, d);
+            
+            let color = 0x0a0f0c;
+            let edgeColor = 0x10b981;
+            
+            if(type === 'canopy') {
+                color = 0x1a0f00;
+                edgeColor = 0xf59e0b;
+            } else if (type === 'pool') {
+                color = 0x0284c7;
+                edgeColor = 0x38bdf8;
+            } else if (type === 'hq') {
+                color = 0x111111;
+                edgeColor = 0xffffff;
+            }
+
+            const material = new THREE.MeshPhysicalMaterial({
+                color: color,
+                metalness: 0.9,
+                roughness: 0.1,
+                transparent: true,
+                opacity: 0.85,
+                transmission: 0.4,
+                clearcoat: 1.0,
+                clearcoatRoughness: 0.1
+            });
+
+            const mesh = new THREE.Mesh(geometry, material);
+            mesh.position.y = yPos + h/2;
+
+            const edges = new THREE.EdgesGeometry(geometry);
+            const lineMat = new THREE.LineBasicMaterial({ color: edgeColor, transparent: true, opacity: 0.7 });
+            const line = new THREE.LineSegments(edges, lineMat);
+            mesh.add(line);
+
+            return mesh;
+        }
+
+        function createVilla3D(type, x, z) {
+            const group = new THREE.Group();
+            group.position.set(x, 0, z);
+
+            let yOffset = 0;
+
+            if(type === 'single') {
+                const base = createBuildingMesh(60, 40, 90, yOffset, 'base'); yOffset += 40;
+                const mid = createBuildingMesh(50, 40, 80, yOffset, 'base'); yOffset += 40;
+                const top = createBuildingMesh(40, 20, 60, yOffset, 'canopy');
+                group.add(base, mid, top);
+            } 
+            else if(type === 'big') {
+                const base = createBuildingMesh(90, 50, 110, yOffset, 'base'); yOffset += 50;
+                const mid = createBuildingMesh(80, 40, 100, yOffset, 'base'); yOffset += 40;
+                const top = createBuildingMesh(60, 30, 80, yOffset, 'canopy');
+                group.add(base, mid, top);
+            } 
+            else if(type === 'signature') {
+                const base = createBuildingMesh(130, 60, 150, yOffset, 'base'); yOffset += 60;
+                const mid = createBuildingMesh(110, 50, 130, yOffset, 'base'); yOffset += 50;
+                const top = createBuildingMesh(90, 40, 110, yOffset, 'canopy');
+                const pool = createBuildingMesh(30, 15, 80, 0, 'pool');
+                pool.position.set(80, 7.5, 0);
+                group.add(base, mid, top, pool);
+            }
+            else if(type === 'hq') {
+                const base = createBuildingMesh(200, 60, 200, yOffset, 'hq'); yOffset += 60;
+                const mid = createBuildingMesh(150, 50, 150, yOffset, 'hq'); yOffset += 50;
+                const top = createBuildingMesh(100, 40, 100, yOffset, 'canopy');
+                group.add(base, mid, top);
+            }
+
+            scene.add(group);
+        }
+
+        function generateCity3D() {
+            // Single Homes
+            for(let r=0; r<5; r++) {
+                for(let c=0; c<5; c++) {
+                    createVilla3D('single', -700 + c*100, -700 + r*120);
+                }
+            }
+            // Big Homes
+            for(let r=0; r<3; r++) {
+                for(let c=0; c<5; c++) {
+                    createVilla3D('big', 400 + c*140, -300 + r*160);
+                }
+            }
+            // Signature Villas
+            for(let r=0; r<2; r++) {
+                for(let c=0; c<5; c++) {
+                    createVilla3D('signature', -300 + c*200, 400 + r*220);
+                }
+            }
+            // HQ Showpiece
+            createVilla3D('hq', 0, 0);
+        }
+
+        function generateHotspots() {
+            mapNodes.forEach((node, index) => {
+                if(index === 0) return; // Skip overview pin
+                
+                const pin = document.createElement('div');
+                pin.className = 'hotspot';
+                pin.onclick = () => goToNode(index);
+
+                pin.innerHTML = `
+                    <div class="hotspot-content">
+                        <div class="hotspot-label">${node.title}</div>
+                        <div class="hotspot-dot"></div>
+                        <div class="hotspot-line"></div>
+                    </div>
+                `;
+                hotspotsContainer.appendChild(pin);
+
+                hotspotElements.push({
+                    element: pin,
+                    index: index,
+                    pos3D: new THREE.Vector3(node.targetX, 150, node.targetZ)
+                });
+            });
+        }
+
+        function onWindowResize() {
+            if(!camera || !renderer) return;
+            camera.aspect = window.innerWidth / window.innerHeight;
+            camera.updateProjectionMatrix();
+            renderer.setSize(window.innerWidth, window.innerHeight);
+        }
+
+        function animate() {
+            requestAnimationFrame(animate);
+
+            // Interpolate camera positioning
+            currentCamPos.lerp(targetCamPos, 0.04);
+            currentTarget.lerp(targetLookAt, 0.04);
+            
+            // Subtle ambient floating
+            const time = Date.now() * 0.0003;
+            const floatX = Math.sin(time) * 80;
+            const floatZ = Math.cos(time) * 80;
+
+            camera.position.set(currentCamPos.x + floatX, currentCamPos.y, currentCamPos.z + floatZ);
+            camera.lookAt(currentTarget);
+
+            // Sync 2D hotspots with 3D positions
+            hotspotElements.forEach(hs => {
+                const vector = hs.pos3D.clone();
+                vector.project(camera);
+                
+                if (vector.z < 1) {
+                    const x = (vector.x * .5 + .5) * window.innerWidth;
+                    const y = -(vector.y * .5 - .5) * window.innerHeight;
+                    hs.element.style.left = `${x}px`;
+                    hs.element.style.top = `${y}px`;
+                    hs.element.style.display = 'block';
+                } else {
+                    hs.element.style.display = 'none';
+                }
+            });
+
+            renderer.render(scene, camera);
+        }
+
+        // --- 3. APP LOGIC & NAVIGATION ---
+        let currentNodeIndex = 0;
+        const infoPanel = document.getElementById('info-panel');
+        const contentContainer = document.getElementById('panel-content-container');
+        const dockIndicators = document.getElementById('dock-indicators');
+        const navPrev = document.getElementById('nav-prev');
+        const navNext = document.getElementById('nav-next');
+
+        function initUI() {
+            mapNodes.forEach((node, index) => {
+                const section = document.createElement('div');
+                section.id = `content-${index}`;
+                section.className = `content-section ${index === 0 ? 'active' : ''}`;
+                section.innerHTML = node.content;
+                contentContainer.appendChild(section);
+
+                const dot = document.createElement('button');
+                dot.className = `h-1.5 rounded-full transition-all duration-500 ease-apple ${index === 0 ? 'w-8 bg-emerald-400' : 'w-2 bg-zinc-600 hover:bg-zinc-400'}`;
+                dot.onclick = () => goToNode(index);
+                dockIndicators.appendChild(dot);
+            });
+            
+            lucide.createIcons();
+            
+            // Set initial camera target
+            const firstNode = mapNodes[0];
+            targetLookAt.set(firstNode.targetX, 0, firstNode.targetZ);
+            const dist = firstNode.camDist;
+            targetCamPos.set(firstNode.targetX + dist*0.8, dist, firstNode.targetZ + dist*0.8);
+        }
+
+        function goToNode(index) {
+            if(index < 0 || index >= mapNodes.length) return;
+            
+            document.getElementById(`content-${currentNodeIndex}`).classList.remove('active');
+            currentNodeIndex = index;
+            document.getElementById(`content-${currentNodeIndex}`).classList.add('active');
+            
+            updateCameraTarget();
+            updateDock();
+            updatePins();
+            
+            infoPanel.classList.add('visible');
+        }
+
+        function updateCameraTarget() {
+            const node = mapNodes[currentNodeIndex];
+            targetLookAt.set(node.targetX, 0, node.targetZ);
+            const dist = node.camDist;
+            targetCamPos.set(node.targetX + dist*0.8, dist, node.targetZ + dist*0.8);
+        }
+
+        function updateDock() {
+            navPrev.disabled = currentNodeIndex === 0;
+            navNext.disabled = currentNodeIndex === mapNodes.length - 1;
+
+            Array.from(dockIndicators.children).forEach((dot, index) => {
+                dot.className = `h-1.5 rounded-full transition-all duration-500 ease-apple ${index === currentNodeIndex ? 'w-8 bg-white' : 'w-2 bg-white/20 hover:bg-white/50'}`;
+            });
+        }
+
+        function updatePins() {
+            const pins = document.querySelectorAll('.hotspot');
+            Array.from(pins).forEach((pin, index) => {
+                if(index + 1 === currentNodeIndex) {
+                    pin.classList.add('active');
+                } else {
+                    pin.classList.remove('active');
+                }
+            });
+        }
+
+        navNext.onclick = () => goToNode(currentNodeIndex + 1);
+        navPrev.onclick = () => goToNode(currentNodeIndex - 1);
+        
+        window.addEventListener('keydown', (e) => {
+            if(document.getElementById('app').classList.contains('opacity-0')) return;
+            if (e.key === 'ArrowRight' || e.key === 'ArrowDown') goToNode(currentNodeIndex + 1);
+            if (e.key === 'ArrowLeft' || e.key === 'ArrowUp') goToNode(currentNodeIndex - 1);
+        });
+
+        // --- 4. CINEMATIC PRELOADER SEQUENCE ---
+        document.addEventListener("DOMContentLoaded", () => {
+            initThree(); // Initialize WebGL Engine
+            initUI();
+
+            const preTitle = document.getElementById('pre-title');
+            const preSubtitle = document.getElementById('pre-subtitle');
+            const preBarContainer = document.getElementById('pre-bar-container');
+            const preBar = document.getElementById('pre-bar');
+            const preloader = document.getElementById('preloader');
+            const preLogos = document.getElementById('pre-logos');
+            const app = document.getElementById('app');
+            
+            const texts = [
+                document.getElementById('pre-text-1'),
+                document.getElementById('pre-text-2'),
+                document.getElementById('pre-text-3'),
+                document.getElementById('pre-text-4')
+            ];
+
+            // Title Fade in
+            setTimeout(() => {
+                preTitle.classList.remove('opacity-0', 'translate-y-6');
+                preSubtitle.classList.remove('opacity-0', 'translate-y-4');
+                preLogos.classList.remove('opacity-0');
+            }, 600);
+
+            // Progress bar and text sequencing
+            setTimeout(() => {
+                preBarContainer.classList.remove('opacity-0');
+                
+                // Sequence Texts
+                texts[0].classList.remove('opacity-0');
+                preBar.style.width = '25%';
+                
+                setTimeout(() => { texts[0].classList.add('opacity-0'); texts[1].classList.remove('opacity-0'); preBar.style.width = '50%'; }, 1000);
+                setTimeout(() => { texts[1].classList.add('opacity-0'); texts[2].classList.remove('opacity-0'); preBar.style.width = '75%'; }, 2000);
+                setTimeout(() => { texts[2].classList.add('opacity-0'); texts[3].classList.remove('opacity-0'); preBar.style.width = '100%'; }, 3000);
+
+            }, 1500);
+
+            // Transition to main app
+            setTimeout(() => {
+                preloader.style.opacity = '0';
+                setTimeout(() => {
+                    preloader.style.display = 'none';
+                    app.classList.remove('pointer-events-none', 'opacity-0');
+                    app.classList.add('opacity-100');
+                    
+                    setTimeout(() => infoPanel.classList.add('visible'), 600);
+                }, 1500); // Wait for fade
+            }, 5500); // Total preloader duration
+        });
+
+        // --- 5. END LOADER SEQUENCE ---
+        document.addEventListener('click', (e) => {
+            if(e.target.closest('#commence-btn')) {
+                const endLoader = document.getElementById('end-loader');
+                const app = document.getElementById('app');
+                const countEl = document.getElementById('countdown-num');
+
+                endLoader.style.display = 'flex';
+                
+                // Fade out main app
+                app.style.opacity = '0';
+                
+                // Trigger End Loader
+                setTimeout(() => {
+                    endLoader.classList.remove('opacity-0', 'pointer-events-none');
+                }, 100);
+                
+                // Countdown Sequence
+                let count = 3;
+                const countInterval = setInterval(() => {
+                    if (count > 0) {
+                        countEl.innerText = count;
+                        countEl.style.transition = 'none';
+                        countEl.style.transform = 'scale(0.5)';
+                        countEl.style.opacity = '0';
+                        
+                        // Force reflow for animation restart
+                        void countEl.offsetWidth;
+                        
+                        countEl.style.transition = 'all 0.8s cubic-bezier(0.16, 1, 0.3, 1)';
+                        countEl.style.transform = 'scale(1.2)';
+                        countEl.style.opacity = '0.8';
+                        
+                        setTimeout(() => {
+                            countEl.style.opacity = '0';
+                        }, 600);
+                        
+                        count--;
+                    } else {
+                        clearInterval(countInterval);
+                        // Sequence the profound messaging after countdown
+                        setTimeout(() => document.getElementById('end-q1').classList.remove('opacity-0', 'translate-y-4'), 200);
+                        setTimeout(() => document.getElementById('end-line').classList.remove('opacity-0'), 1500);
+                        setTimeout(() => document.getElementById('end-q3').classList.remove('opacity-0', 'translate-y-4'), 2800);
+                        setTimeout(() => document.getElementById('end-logos').classList.remove('opacity-0', 'scale-95'), 4800);
+                    }
+                }, 1000);
+            }
+        });
+
+    </script>
+</body>
+</html>
